@@ -8,7 +8,11 @@ fn model_exists(model_path: &str) -> bool {
 fn main() {
   let args: Vec<String> = std::env::args().collect();
   if args.len() > 1 {
-    println!("Hello World");
+    if !model_exists("models/example_model") {
+      println!("No Model found. Downloading...");
+    } else {
+      println!("Model found. Starting application...");
+    }
   } else {
     app_lib::run();
   }
