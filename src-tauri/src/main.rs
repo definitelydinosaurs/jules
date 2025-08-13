@@ -3,6 +3,8 @@
 
 use std::fs;
 use std::io::Write;
+use futures_util::StreamExt;
+use indicatif::{ProgressBar, ProgressStyle};
 
 fn model_exists(model_path: &str) -> bool {
   std::path::Path::new(&format!("{}/model.gguf", model_path)).exists()
