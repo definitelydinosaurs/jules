@@ -1,0 +1,58 @@
+name: Build llama-cli for macOS
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-macos:
+    runs-on: macos-latest
+    
+    strategy:
+      matrix:
+        include:
+          - arch: x86_64
+            target: x86_64-apple-darwin
+            cmake_arch: x86_64
+          - arch: arm64
+            target: aarch64-apple-darwin
+            cmake_arch: arm64
+    
+    steps:
+    - name: Checkout llama.cpp
+      uses: actions/checkout@v4
+      with:
+        repository: 'ggerganov/llama.cpp'
+        ref: 'master'
+    
+    - name: Install dependencies
+      run: |
+        brew install cmake
+    
+    - name: Build llama-cli for ${{ matrix.target }}
+      run: |
+        mkdir build-${{ matrix.arch }}
+        cd build-${{ matrix.arch }}
+        cmake .. \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DCMAKE_OSX_ARCHITECTURES=${{ matrix.cmake_arch }} \
+          -DLLAMA_METAL=ON
+        make -j$(sysctl -n hw.ncpu) llama-cli
+        ls -al
+    
+    - name: Create binaries directory and copy with target name
+      run: |
+        mkdir -p binaries
+        cp build-${{ matrix.arch }}/bin/llama-cli binaries/llama-cli-${{ matrix.target }}
+        chmod +x binaries/llama-cli-${{ matrix.target }}
+    
+    - name: Verify binary
+      run: |
+        file binaries/llama-cli-${{ matrix.target }}
+        ./binaries/llama-cli-${{ matrix.target }} --help || true
+    
+    - name: Upload binary artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: llama-cli-${{ matrix.target }}
+        path: binaries/llama-cli-${{ matrix.target }}
+        retention-days: 30
