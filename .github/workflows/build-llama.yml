@@ -6,28 +6,25 @@ on:
 jobs:
   build-macos:
     runs-on: macos-latest
-    
+
     strategy:
       matrix:
         include:
-          - arch: x86_64
-            target: x86_64-apple-darwin
-            cmake_arch: x86_64
           - arch: arm64
             target: aarch64-apple-darwin
             cmake_arch: arm64
-    
+
     steps:
     - name: Checkout llama.cpp
       uses: actions/checkout@v4
       with:
         repository: 'ggerganov/llama.cpp'
         ref: 'master'
-    
+
     - name: Install dependencies
       run: |
         brew install cmake
-    
+
     - name: Build llama-cli for ${{ matrix.target }}
       run: |
         mkdir build-${{ matrix.arch }}
