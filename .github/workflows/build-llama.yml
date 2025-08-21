@@ -32,21 +32,23 @@ jobs:
         cmake .. \
           -DCMAKE_BUILD_TYPE=Release \
           -DCMAKE_OSX_ARCHITECTURES=${{ matrix.cmake_arch }} \
-          -DLLAMA_METAL=ON
+          -DLLAMA_METAL=ON \
+          -DBUILD_SHARED_LIBS=OFF \
+          -DLLAMA_STATIC=ON
         make -j$(sysctl -n hw.ncpu) llama-cli
         ls -al
-    
+
     - name: Create binaries directory and copy with target name
       run: |
         mkdir -p binaries
         cp build-${{ matrix.arch }}/bin/llama-cli binaries/llama-cli-${{ matrix.target }}
         chmod +x binaries/llama-cli-${{ matrix.target }}
-    
+
     - name: Verify binary
       run: |
         file binaries/llama-cli-${{ matrix.target }}
         ./binaries/llama-cli-${{ matrix.target }} --help || true
-    
+
     - name: Upload binary artifact
       uses: actions/upload-artifact@v4
       with:
