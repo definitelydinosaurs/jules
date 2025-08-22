@@ -3,6 +3,7 @@
 
 use std::fs;
 use std::io::Write;
+use std::process::Command;
 use futures_util::StreamExt;
 use indicatif::{ProgressBar, ProgressStyle};
 
@@ -45,6 +46,21 @@ async fn download_model(model_path: &str, model_url: &str) -> Result<(), Box<dyn
   Ok(())
 }
 
+async fn execute_external_process() -> Result<(), Box<dyn std::error::Error>> {
+  // this path needs to be fixed to be relevant to a built tauri app
+  let output = Command::new("./binaries/llama-cli-aarch64-apple-darwin")
+    .args(&["--help"])
+    .output()?;
+
+  if output.status.success() {
+    println!("Process output: {}", String::from_utf8_lossy(&output.stdout));
+  } else {
+    eprintln!("Process failed: {}", String::from_utf8_lossy(&output.stderr));
+  }
+
+  Ok(())
+}
+
 #[tokio::main]
 async fn main() {
   let args: Vec<String> = std::env::args().collect();
@@ -56,6 +72,13 @@ async fn main() {
         std::process::exit(1);
       }
     }
+
+    // Execute external process
+    match execute_external_process().await {
+      Ok(_) => println!("External process executed successfully"),
+      Err(e) => eprintln!("Error executing external process: {}", e),
+    }
+
     println!("Hello World");
   } else {
     app_lib::run();
