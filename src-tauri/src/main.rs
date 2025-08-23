@@ -46,10 +46,10 @@ async fn download_model(model_path: &str, model_url: &str) -> Result<(), Box<dyn
   Ok(())
 }
 
-async fn execute_external_process() -> Result<(), Box<dyn std::error::Error>> {
+async fn invoke_llama_cli() -> Result<(), Box<dyn std::error::Error>> {
   // this path needs to be fixed to be relevant to a built tauri app
   let output = Command::new("./binaries/llama-cli-aarch64-apple-darwin")
-    .args(&["--help"])
+    .args(&["-m", "models/model.gguf", "-p", "I believe the meaning of life is", "-n", "128", "-no-cnv"])
     .output()?;
 
   if output.status.success() {
@@ -74,7 +74,7 @@ async fn main() {
     }
 
     // Execute external process
-    match execute_external_process().await {
+    match invoke_llama_cli().await {
       Ok(_) => println!("External process executed successfully"),
       Err(e) => eprintln!("Error executing external process: {}", e),
     }
