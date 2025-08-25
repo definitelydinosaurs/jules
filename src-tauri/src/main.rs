@@ -49,7 +49,11 @@ async fn download_model(model_path: &str, model_url: &str) -> Result<(), Box<dyn
 async fn invoke_llama_cli(prompt: &str) -> Result<(), Box<dyn std::error::Error>> {
   // this path needs to be fixed to be relevant to a built tauri app
   let output = Command::new("./binaries/llama-cli-aarch64-apple-darwin")
-    .args(&["-m", "models/model.gguf", "-p", prompt, "-n", "128", "-no-cnv"])
+    .args(&["-m", "models/model.gguf", "-p", &format!("{}", prompt), "-n", "512", "-no-cnv",
+            "--in-prefix", "<|im_start|>user\n",
+            "--in-suffix", "<|im_end|>\n<|im_start|>assistant\n",
+            "--reverse-prompt", "<|im_end|>",
+            "-e"])
     .output()?;
 
   if output.status.success() {
