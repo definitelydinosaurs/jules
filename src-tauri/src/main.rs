@@ -47,14 +47,26 @@ async fn download_model(model_path: &str, model_url: &str) -> Result<(), Box<dyn
 }
 
 async fn invoke_llama_cli(prompt: &str) -> Result<(), Box<dyn std::error::Error>> {
+  /** reference prompt
+  ./llama-cli -m qwen2-1_5b-instruct-q5_k_m.gguf \
+  -n 512 -co -i -if -f prompts/chat-with-qwen.txt \
+  --in-prefix "<|im_start|>user\n" \
+  --in-suffix "<|im_end|>\n<|im_start|>assistant\n" \
+  -ngl 28 -fa
+  */
+
   // this path needs to be fixed to be relevant to a built tauri app
-  let output = Command::new("./binaries/llama-cli-aarch64-apple-darwin")
-    .args(&["-m", "models/model.gguf", "-p", &format!("{}", prompt), "-n", "512", "-no-cnv",
-            "--in-prefix", "<|im_start|>user\n",
-            "--in-suffix", "<|im_end|>\n<|im_start|>assistant\n",
-            "--reverse-prompt", "<|im_end|>",
-            "-e"])
-    .output()?;
+let output = Command::new("./binaries/llama-cli-aarch64-apple-darwin")
+  .args(&[
+    "-m", "models/model.gguf",
+    "-p", &format!("<|im_start|>user\n{}<|im_end|>\n<|im_start|>assistant\n", prompt),
+    "-n", "512",
+    "--reverse-prompt", "<|im_end|>",
+    "-ngl", "28",  // Add GPU acceleration if available
+    "-fa",         // Add flash attention optimization
+    "-e"           // Keep this for end-of-text handling
+  ])
+  .output()?;
 
   if output.status.success() {
     println!("Process output: {}", String::from_utf8_lossy(&output.stdout));
