@@ -56,17 +56,17 @@ async fn invoke_llama_cli(prompt: &str) -> Result<(), Box<dyn std::error::Error>
   */
 
   // this path needs to be fixed to be relevant to a built tauri app
-let output = Command::new("./binaries/llama-cli-aarch64-apple-darwin")
-  .args(&[
-    "-m", "models/model.gguf",
-    "-p", &format!("<|im_start|>user\n{}<|im_end|>\n<|im_start|>assistant\n", prompt),
-    "-n", "512",
-    "--reverse-prompt", "<|im_end|>",
-    "-ngl", "28",  // Add GPU acceleration if available
-    "-fa",         // Add flash attention optimization
-    "-e"           // Keep this for end-of-text handling
-  ])
-  .output()?;
+  let output = Command::new("./binaries/llama-cli-aarch64-apple-darwin")
+    .args(&[
+      "-m", "models/model.gguf",
+      "-p", &format!("<|im_start|>user\n{}<|im_end|>\n<|im_start|>assistant\n", prompt),
+      "-n", "512",
+      "--reverse-prompt", "<|im_end|>",
+      "-ngl", "28",  // GPU acceleration if available
+      "-fa",         // flash attention optimization
+      "-e"           // end-of-text handling
+    ])
+    .output()?;
 
   if output.status.success() {
     println!("Process output: {}", String::from_utf8_lossy(&output.stdout));
