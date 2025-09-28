@@ -89,8 +89,18 @@ async fn main() {
       }
     }
 
+    // Check if --stream flag is present
+    let stream = args.contains(&"--stream".to_string());
+
+    // Find the prompt (first non-flag argument)
+    let prompt = args.iter()
+      .skip(1)
+      .find(|arg| !arg.starts_with("--"))
+      .map(|s| s.as_str())
+      .unwrap_or("");
+
     // pass arg as query to invoke_llama_cli
-    match invoke_llama_cli(args[1].as_str()).await {
+    match invoke_llama_cli(prompt).await {
       Ok(_) => println!("External process executed successfully"),
       Err(e) => eprintln!("Error executing external process: {}", e),
     }
