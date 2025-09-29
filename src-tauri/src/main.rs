@@ -46,7 +46,7 @@ async fn download_model(model_path: &str, model_url: &str) -> Result<(), Box<dyn
   Ok(())
 }
 
-async fn invoke_llama_cli(prompt: &str) -> Result<(), Box<dyn std::error::Error>> {
+async fn invoke_llama_cli(prompt: &str, stream: bool) -> Result<(), Box<dyn std::error::Error>> {
   /** reference prompt
   ./llama-cli -m qwen2-1_5b-instruct-q5_k_m.gguf \
   -n 512 -co -i -if -f prompts/chat-with-qwen.txt \
@@ -100,7 +100,7 @@ async fn main() {
       .unwrap_or("");
 
     // pass arg as query to invoke_llama_cli
-    match invoke_llama_cli(prompt).await {
+    match invoke_llama_cli(prompt, stream).await {
       Ok(_) => println!("External process executed successfully"),
       Err(e) => eprintln!("Error executing external process: {}", e),
     }
