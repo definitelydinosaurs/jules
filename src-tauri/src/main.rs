@@ -2,8 +2,8 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use std::fs;
-use std::io::Write;
-use std::process::Command;
+use std::io::{Write, BufRead, BufReader};
+use std::process::{Command, Stdio};
 use futures_util::StreamExt;
 use indicatif::{ProgressBar, ProgressStyle};
 
@@ -56,7 +56,7 @@ async fn invoke_llama_cli(prompt: &str, stream: bool) -> Result<(), Box<dyn std:
   */
 
   // this path needs to be fixed to be relevant to a built tauri app
-  let output = Command::new("./binaries/llama-cli-aarch64-apple-darwin")
+  let mut child = Command::new("./binaries/llama-cli-aarch64-apple-darwin")
     .args(&[
       "-m", "models/model.gguf",
       "-p", &format!("<|im_start|>user\n{}<|im_end|>\n<|im_start|>assistant\n", prompt),
@@ -66,12 +66,28 @@ async fn invoke_llama_cli(prompt: &str, stream: bool) -> Result<(), Box<dyn std:
       "-fa",         // flash attention optimization
       "-e"           // end-of-text handling
     ])
-    .output()?;
+    .stdout(Stdio::piped())
+    .stderr(Stdio::null())
+    .stdin(Stdio::null())
+    .spawn()?;
 
-  if output.status.success() {
-    println!("Process output: {}", String::from_utf8_lossy(&output.stdout));
+  let stdout = child.stdout.take().unwrap();
+  let reader = BufReader::new(stdout);
+
+  let mut aggregated_output = String::new();
+  for line in reader.lines() {
+    let line = line?;
+    println!("{}", line); // Stream output in real-time
+    aggregated_output.push_str(&line);
+    aggregated_output.push('\n');
+  }
+
+  let status = child.wait()?;
+
+  if status.success() {
+    println!("Process output: {}", aggregated_output);
   } else {
-    eprintln!("Process failed: {}", String::from_utf8_lossy(&output.stderr));
+    eprintln!("Process failed");
   }
 
   Ok(())
