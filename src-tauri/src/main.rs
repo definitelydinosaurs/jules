@@ -2,7 +2,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use std::fs;
-use std::io::{Write, BufRead, BufReader};
+use std::io::{Write, BufRead, BufReader, Read};
 use std::process::{Command, Stdio};
 use futures_util::StreamExt;
 use indicatif::{ProgressBar, ProgressStyle};
@@ -56,11 +56,12 @@ async fn invoke_llama_cli(prompt: &str, stream: bool) -> Result<(), Box<dyn std:
   */
 
   // this path needs to be fixed to be relevant to a built tauri app
+  // this path needs to be fixed to be relevant to a built tauri app
   let mut child = Command::new("./binaries/llama-cli-aarch64-apple-darwin")
     .args(&[
       "-m", "models/model.gguf",
       "-p", &format!("<|im_start|>user\n{}<|im_end|>\n<|im_start|>assistant\n", prompt),
-      "-n", "512",
+      "-n", "1000",
       "--reverse-prompt", "<|im_end|>",
       "-ngl", "28",  // GPU acceleration if available
       "-fa",         // flash attention optimization
@@ -72,20 +73,41 @@ async fn invoke_llama_cli(prompt: &str, stream: bool) -> Result<(), Box<dyn std:
     .spawn()?;
 
   let stdout = child.stdout.take().unwrap();
-  let reader = BufReader::new(stdout);
 
   let mut aggregated_output = String::new();
-  for line in reader.lines() {
-    let line = line?;
-    println!("{}", line); // Stream output in real-time
-    aggregated_output.push_str(&line);
-    aggregated_output.push('\n');
+
+  if stream {
+    // Stream mode: read character by character for real-time output
+    use std::io::Read;
+    let mut reader = stdout;
+    let mut buffer = [0; 1]; // Read one byte at a time
+
+    while let Ok(bytes_read) = reader.read(&mut buffer) {
+      if bytes_read == 0 {
+        break; // EOF
+      }
+
+      let ch = buffer[0] as char;
+      print!("{}", ch); // Print each character immediately
+      std::io::stdout().flush()?; // Force immediate output
+      aggregated_output.push(ch);
+    }
+  } else {
+    // Non-stream mode: collect all output first
+    let reader = BufReader::new(stdout);
+    for line in reader.lines() {
+      let line = line?;
+      aggregated_output.push_str(&line);
+      aggregated_output.push('\n');
+    }
   }
 
   let status = child.wait()?;
 
   if status.success() {
-    println!("Process output: {}", aggregated_output);
+    if !stream {
+      println!("Process output: {}", aggregated_output);
+    }
   } else {
     eprintln!("Process failed");
   }
