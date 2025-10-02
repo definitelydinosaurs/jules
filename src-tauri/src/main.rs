@@ -130,6 +130,16 @@ async fn main() {
     // Check if --stream flag is present
     let stream = args.contains(&"--stream".to_string());
 
+    // Check if --context flag is present and capture its value
+    let context = args.iter()
+      .position(|arg| arg.starts_with("--context="))
+      .and_then(|i| args[i].strip_prefix("--context="))
+      .map(|s| s.to_string());
+
+    if let Some(ctx) = &context {
+      println!("Context: {}", ctx);
+    }
+
     // Find the prompt (first non-flag argument)
     let prompt = args.iter()
       .skip(1)
