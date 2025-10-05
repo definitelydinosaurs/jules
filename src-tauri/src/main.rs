@@ -119,14 +119,14 @@ async fn invoke_llama_cli(prompt: &str, stream: bool) -> Result<(), Box<dyn std:
 async fn main() {
   let args: Vec<String> = std::env::args().collect();
 
-  if args.len() > 1 {
-    if !model_exists("models") {
-      if let Err(e) = download_model("models", "https://huggingface.co/Qwen/Qwen2-1.5B-Instruct-GGUF/resolve/main/qwen2-1_5b-instruct-q4_0.gguf?download=true").await {
-        eprintln!("Error downloading model: {}", e);
-        std::process::exit(1);
-      }
+  if !model_exists("models") {
+    if let Err(e) = download_model("models", "https://huggingface.co/Qwen/Qwen2-1.5B-Instruct-GGUF/resolve/main/qwen2-1_5b-instruct-q4_0.gguf?download=true").await {
+      eprintln!("Error downloading model: {}", e);
+      std::process::exit(1);
     }
+  }
 
+  if args.len() > 1 {
     // Check if --stream flag is present
     let stream = args.contains(&"--stream".to_string());
 
