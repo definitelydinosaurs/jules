@@ -39,7 +39,17 @@ async fn main() {
 
     // pass arg as query to invoke_llama_cli
     match invoke_llama_cli(prompt, stream).await {
-      Ok(_) => println!("External process executed successfully"),
+      Ok(Some(reader)) => {
+        let mut buf_reader = reader;
+        let mut buffer = String::new();
+        use std::io::BufRead;
+
+        while buf_reader.read_line(&mut buffer).unwrap() > 0 {
+          print!("{}", buffer);
+          buffer.clear();
+        }
+      },
+      Ok(None) => println!("No output from process."),
       Err(e) => eprintln!("Error executing external process: {}", e),
     }
 
