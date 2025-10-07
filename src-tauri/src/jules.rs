@@ -43,7 +43,7 @@ pub async fn download_model(model_path: &str, model_url: &str) -> Result<(), Box
   Ok(())
 }
 
-pub async fn invoke_llama_cli(prompt: &str, stream: bool) -> Result<(), Box<dyn std::error::Error>> {
+pub async fn invoke_llama_cli(prompt: &str, stream: bool) -> Result<Option<BufReader<std::process::ChildStdout>>, Box<dyn std::error::Error>> {
   /** reference prompt
   ./llama-cli -m qwen2-1_5b-instruct-q5_k_m.gguf \
   -n 512 -co -i -if -f prompts/chat-with-qwen.txt \
@@ -75,20 +75,21 @@ pub async fn invoke_llama_cli(prompt: &str, stream: bool) -> Result<(), Box<dyn 
 
   if stream {
     // Stream mode: read character by character for real-time output
-    use std::io::Read;
-    let mut reader = stdout;
-    let mut buffer = [0; 1]; // Read one byte at a time
+    // use std::io::Read;
+    // let mut reader = stdout;
+    // let mut buffer = [0; 1]; // Read one byte at a time
 
-    while let Ok(bytes_read) = reader.read(&mut buffer) {
-      if bytes_read == 0 {
-        break; // EOF
-      }
+    // while let Ok(bytes_read) = reader.read(&mut buffer) {
+    //   if bytes_read == 0 {
+    //     break; // EOF
+    //   }
 
-      let ch = buffer[0] as char;
-      print!("{}", ch); // Print each character immediately
-      std::io::stdout().flush()?; // Force immediate output
-      aggregated_output.push(ch);
-    }
+    //   let ch = buffer[0] as char;
+    //   print!("{}", ch); // Print each character immediately
+    //   std::io::stdout().flush()?; // Force immediate output
+    //   aggregated_output.push(ch);
+    // }
+    return Ok(Some(BufReader::new(stdout)));
   } else {
     // Non-stream mode: collect all output first
     let reader = BufReader::new(stdout);
@@ -109,5 +110,5 @@ pub async fn invoke_llama_cli(prompt: &str, stream: bool) -> Result<(), Box<dyn 
     eprintln!("Process failed");
   }
 
-  Ok(())
+  Ok(None)
 }
